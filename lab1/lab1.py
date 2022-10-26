@@ -1,2 +1,2 @@
-lab1 = "Hello Wolrd!"
+lab1 = "Hello Wolrd"
 print(lab1)
