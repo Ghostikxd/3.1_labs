@@ -10,6 +10,8 @@
 
 import re
 import os
+import gzip
+import io
 
 from statistics import median
 
@@ -21,18 +23,13 @@ config = {
 def main():
     logs = {}
     log_names = os.listdir(config.get('LOG_DIR'))
-    if not log_names:
-        return print(f'Logs not found')
-    for name in log_names:
-        if name == 'nginx-access-ui.log-20170630':
-            log_name = name
-        else:
-            return print(f'Insert file name or folder does not contain this file')
+    log_name = log_names[-1]
     parsed_line = f'{config.get("LOG_DIR")}/{log_name}'
     regex = re.compile(r'\"[A-Z]+ (\S+) .* (\d+\.\d+)\n')
     total_count = 0
 
-    with open(parsed_line, 'r') as file:
+    def read_log(file):
+        nonlocal total_count
         for line in file:
             result = regex.findall(line)
             total_count += 1
@@ -43,15 +40,24 @@ def main():
                 logs[url] = []
             logs[url].append(float(time))
 
-        for key in logs:
-            count = len(logs[key])
-            print(f'URL: {key} \n'
-                  f'\tcount: {count}'
-                  f'\n\tcount_perc: {count/total_count * 100}'
-                  f'\n\ttime_avg: {sum(logs[key])/count}'
-                  f'\n\ttime_max: {max(logs[key])}'
-                  f'\n\ttime_median: {median(logs[key])}')
-            print('\n')
+    if log_name.lower().endswith('.gz'):
+        with gzip.open(parsed_line, 'r') as archive:
+            with io.TextIOWrapper(archive, encoding='utf-8') as file:
+                read_log(file)
+
+    else:
+        with open(parsed_line, 'r') as file:
+            read_log(file)
+
+    for key in logs:
+        count = len(logs[key])
+        print(f'URL: {key} \n'
+              f'\tcount: {count}'
+              f'\n\tcount_perc: {count/total_count * 100}'
+              f'\n\ttime_avg: {sum(logs[key])/count}'
+              f'\n\ttime_max: {max(logs[key])}'
+              f'\n\ttime_median: {median(logs[key])}')
+        print('\n')
 
 
 main()
