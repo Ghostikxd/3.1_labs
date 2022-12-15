@@ -10,8 +10,7 @@
 
 import re
 import os
-import gzip
-import io
+
 from statistics import median
 
 config = {
@@ -21,12 +20,14 @@ config = {
 
 def main():
     logs = {}
-    log_names = sorted(os.listdir(config.get('LOG_DIR')))
+    log_names = os.listdir(config.get('LOG_DIR'))
     if not log_names:
         return print(f'Logs not found')
     for name in log_names:
         if name == 'nginx-access-ui.log-20170630':
             log_name = name
+        else:
+            return print(f'Insert file name or folder does not contain this file')
     parsed_line = f'{config.get("LOG_DIR")}/{log_name}'
     regex = re.compile(r'\"[A-Z]+ (\S+) .* (\d+\.\d+)\n')
     total_count = 0
